@@ -11,41 +11,46 @@ defmodule MyApp do
   plug(:match)
   plug(:dispatch)
 
-
   def init(options) do
     options
   end
 
-
-  post "/v1/insert/value/" do
-    CacheManager.insert_value("name","rocha")
+  post "/v1/redis" do
     request = HandleRequest.extract_payload(conn)
-    account = %{account_number: "73216154", balance: 15000000}
-    HandleResponse.build_response(%{status: 200, body: %{data: [%{account: account}]}}, conn)
+    key = request.redis.key
+    value = request.redis.value
+    redis = %{key: key, value: value}
+
+    CacheManager.insert_value(key, value)
+    HandleResponse.build_response(%{status: 200, body: %{data: [%{redis: redis}]}}, conn)
   end
 
-  get "/get/value/:id" do
-    account = %{account_number: "73216154", balance: 15000000, id: id}
-     {:ok, result} = CacheManager.get_value("name")
-    IO.inspect("The id is #{id}")
-    IO.inspect("consultado el valor para la llave #{id} valor : #{result}")
-    HandleResponse.build_response(%{status: 200, body: %{data: [%{account: account}]}}, conn)
+  get "/v1/redis/:id" do
+    case CacheManager.get_value(id) do
+      {:ok, result} ->
+        redis = %{key: id, value: result}
+        HandleResponse.build_response(%{status: 200, body: %{data: [%{redis: redis}]}}, conn)
+
+      {:error, _} ->
+        redis = %{key: id, value: "Key not found in cache"}
+        HandleResponse.build_response(%{status: 200, body: %{data: [%{redis: redis}]}}, conn)
+    end
   end
 
-  delete "/delete/value/:id" do
-    account = %{account_number: "73216154", balance: 15000000, id: id}
-     {:ok, result} = CacheManager.get_value("name")
-    IO.inspect("The id is #{id}")
-    IO.inspect("consultado el valor para la llave #{id} valor : #{result}")
-    HandleResponse.build_response(%{status: 200, body: %{data: [%{account: account}]}}, conn)
+  delete "/v1/redis/:id" do
+    {:ok, result} = CacheManager.delete_value(id)
+
+    conn
+    |> put_resp_header("content-type", "text/plain")
+    |> send_resp(204, "")
   end
 
-  delete "/clear/cache/" do
-    account = %{account_number: "73216154", balance: 15000000, id: id}
-     {:ok, result} = CacheManager.get_value("name")
-    IO.inspect("The id is #{id}")
-    IO.inspect("consultado el valor para la llave #{id} valor : #{result}")
-    HandleResponse.build_response(%{status: 200, body: %{data: [%{account: account}]}}, conn)
+  post "/v1/redis/clear-cache" do
+    CacheManager.clear_cache()
+
+    conn
+    |> put_resp_header("content-type", "text/plain")
+    |> send_resp(204, "")
   end
 
   match _ do
@@ -53,7 +58,4 @@ defmodule MyApp do
     {body, conn} = HandleError.handle_error({:error, :not_found}, conn)
     HandleResponse.build_response(body, conn)
   end
-
-
-
 end
