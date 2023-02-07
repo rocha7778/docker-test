@@ -2,7 +2,6 @@ defmodule WebServer.MixProject do
   use Mix.Project
 
 
-
   def project do
     [
       app: :web_server,

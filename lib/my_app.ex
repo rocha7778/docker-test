@@ -5,19 +5,24 @@ defmodule MyApp do
   alias HandleError
   alias HandleResponse
   alias HandleRequest
+
   alias HttpRequest
+
 
   plug(Plug.Parsers, parsers: [:urlencoded, :json], json_decoder: Jason)
   plug(:match)
   plug(:dispatch)
 
+
   @timeout Application.get_env(:http_connector, :http_timeout, 3000)
   @cacert_path Application.get_env(:http_connector, :cacert_path)
+
 
 
   def init(options) do
     options
   end
+
 
 
   post "/v1/retrieve" do
@@ -75,6 +80,7 @@ defmodule MyApp do
 
     IO.inspect("The id is #{id}")
     HandleResponse.build_response(%{status: 204, body: %{data: [%{account: account}]}}, conn)
+
   end
 
   match _ do
@@ -82,7 +88,4 @@ defmodule MyApp do
     {body, conn} = HandleError.handle_error({:error, :not_found}, conn)
     HandleResponse.build_response(body, conn)
   end
-
-
-
 end
