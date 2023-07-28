@@ -67,26 +67,7 @@ defmodule HttpClient do
         message ->
           case Mint.HTTP.stream(conn, message) do
             {:ok, conn, responses} ->
-              {body, status} =
-                Enum.reduce(
-                  responses,
-                  {body, :incomplete},
-                  fn res, {body, _status} ->
-                    case res do
-                      {:status, ^request_ref, _status_code} ->
-                        {body, :incomplete}
-
-                      {:headers, ^request_ref, _headers} ->
-                        {body, :incomplete}
-
-                      {:data, ^request_ref, data} ->
-                        {[data | body], :incomplete}
-
-                      {:done, ^request_ref} ->
-                        {Enum.reverse(body), :complete}
-                    end
-                  end
-                )
+              {body, status} = process_response(responses, request_ref, body)
 
               {conn, :ok, body, status}
 
@@ -104,5 +85,27 @@ defmodule HttpClient do
     else
       handle_response(conn, request_ref, body)
     end
+  end
+
+  defp process_response(responses, request_ref, body) do
+    Enum.reduce(
+      responses,
+      {body, :incomplete},
+      fn res, {body, _status} ->
+        case res do
+          {:status, ^request_ref, _status_code} ->
+            {body, :incomplete}
+
+          {:headers, ^request_ref, _headers} ->
+            {body, :incomplete}
+
+          {:data, ^request_ref, data} ->
+            {[data | body], :incomplete}
+
+          {:done, ^request_ref} ->
+            {Enum.reverse(body), :complete}
+        end
+      end
+    )
   end
 end

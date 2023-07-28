@@ -1,7 +1,6 @@
 defmodule WebServer.MixProject do
   use Mix.Project
 
-
   def project do
     [
       app: :web_server,
@@ -28,7 +27,11 @@ defmodule WebServer.MixProject do
       {:jason, "~> 1.2.0"},
       {:distillery, "~> 2.1"},
       {:mint, "~> 1.4"},
-      {:castore, "~> 0.1.0"}
+      {:castore, "~> 0.1.0"},
+      {:telemetry, "~> 1.0"},
+      {:telemetry_metrics, "~> 0.6.1"},
+      {:telemetry_metrics_prometheus, "~> 1.1.0"},
+      {:request_validator, "~> 0.6"}
     ]
   end
 end
